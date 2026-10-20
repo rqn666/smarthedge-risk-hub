@@ -1,0 +1,83 @@
+server:
+  error:
+    # 开发期：错误页直接显示访问路径和原因，免得只看到 Whitelabel 干瞪眼
+    include-path: always
+    include-message: always
+  port: 8082
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/smarthedge_risk_hub?serverTimezone=GMT
+    # 账号密码走环境变量注入，仓库不落明文。本地启动示例：
+    #   IDEA：Run Configuration -> Environment variables 添加 MYSQL_USER / MYSQL_PASSWORD
+    #   命令行：MYSQL_PASSWORD=xxx mvn spring-boot:run
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:}
+  servlet:
+    multipart:
+      # 关键：Spring Boot 默认单文件上限只有 1MB，知识库 PDF 必然超。
+      # 不放开的话上传会报 MaxUploadSizeExceededException，且报错信息很不直观。
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+# ===== AI 智能问答（M1）=====
+ai:
+  llm:
+    # Ollama 的 OpenAI 兼容地址
+    base-url: http://localhost:11434
+    # 实测：qwen2.5:7b 支持原生 Function Calling 且人设服从度好；
+    # r1 不支持 tools（实测返回 tool_calls: NONE），需切 prompt 模式并把 model 改回 deepseek-r1:7b
+    model: qwen2.5:7b
+    # native: 走 OpenAI tools 协议；prompt: 提示词约束输出 JSON，后端解析（给 r1 用）
+    tool-mode: native
+    connect-timeout-seconds: 10
+    read-timeout-seconds: 180
+    max-tool-rounds: 3
+    # 流式接口的工具轮次，默认 1：拿到工具结果后立刻开始流式出字。
+    # 每多一轮都要多一次非流式推理（本地 7B 约 30~60s），用户全程看不到字；
+    # 确实需要多轮工具的场景请走非流式 /api/ai/ask（它用 max-tool-rounds）
+    stream-tool-rounds: 1
+    temperature: 0.3
+  rag:
+    # 知识库（RAG）总开关；false 时检索直接返回空，对话不受影响
+    enabled: true
+    # 向量化模型：Ollama 本地 bge-m3（实测 1024 维）
+    embedding-model: bge-m3
+    # 必须与 pgvector 表的 vector(1024) 一致，改这里要同步改 DDL 并重建向量
+    embedding-dim: 1024
+    # 批量向量化条数
+    batch-size: 8
+    top-k: 5
+    # 相似度下限（余弦）。bge-m3 相关片段 0.5~0.75，无关 <0.3；
+    # 太高会「检索到却被过滤」，太低会灌无关内容给大模型造成幻觉
+    min-score: 0.45
+    chunk-size: 500
+    chunk-overlap: 80
+    # 上传文件存放目录，留空用系统临时目录
+    upload-dir: ""
+    # pgvector 向量库（独立于业务 MySQL，不接入 MyBatis-Plus）
+    pg:
+      url: jdbc:postgresql://127.0.0.1:5432/vec_db
+      username: ${PG_USER:postgres}
+      password: ${PG_PASSWORD:}
+      max-pool-size: 5
+      connect-timeout-seconds: 5
+
+# ===== Elasticsearch 搜索 =====
+es:
+  # 多个地址逗号分隔
+  hosts: 127.0.0.1:9200
+  # ES 未开安全认证时留空
+  username: ""
+  password: ""
+  connect-timeout-ms: 5000
+  socket-timeout-ms: 30000
+  default-size: 20
+  # 总开关：false 时全部跳过 ES（排障/回滚用），业务照常走数据库
+  enabled: true
+  # 双写失败补偿
+  retry-enabled: true
+  retry-fixed-delay-ms: 60000
+  retry-max-times: 5
+

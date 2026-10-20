@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.7.15</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>com.ape</groupId>
+    <artifactId>SmartHedge_Risk_Hub</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>SmartHedge_Risk_Hub</name>
+    <description>SmartHedge_Risk_Hub</description>
+    <packaging>jar</packaging>
+    <properties>
+        <java.version>8</java.version>
+        <!-- 关键：锁死 ES 客户端版本，与本地服务端 7.16.2 严格一致。
+             Spring Boot 父 pom 默认管理为 7.17.x，不锁会导致客户端/服务端版本不匹配 -->
+        <elasticsearch.version>7.16.2</elasticsearch.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>3.5.1</version>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.16</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <!-- AOP：操作日志切面需要 @Aspect 与 aspectjweaver。
+             spring-boot-starter-web 只传递了 spring-aop（动态代理），
+             不带 AspectJ 注解支持，缺了它 @Aspect 类不会被识别 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.jsqlparser</groupId>
+            <artifactId>jsqlparser</artifactId>
+            <version>4.3</version>
+        </dependency>
+        <!-- PDF 解析（知识库上传）：2.0.x 是兼容 JDK 8 的分支，3.x 需要 JDK 11+ -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>2.0.30</version>
+        </dependency>
+        <!-- pgvector 向量库：PostgreSQL 驱动。42.5.x 兼容 JDK 8（42.7+ 需 JDK 11）
+             注意：知识库走独立 JdbcTemplate，不接入 MyBatis-Plus -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.5.6</version>
+        </dependency>
+        <!-- Elasticsearch 7.16.2 客户端：版本由 properties 的 elasticsearch.version 锁死，
+             与 ES 服务端一致；不要用 spring-boot-starter-data-elasticsearch -->
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-high-level-client</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- 关键：保留方法参数名，否则反射拿到的参数名是 arg0/arg1，
+                         AI 工具的 @ToolParam 机制会失效 -->
+                    <parameters>true</parameters>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

@@ -1,0 +1,30 @@
+# ===== 构建产物 =====
+target/
+*.jar
+*.war
+
+# ===== 日志 =====
+*.log
+logs/
+
+# ===== IDE =====
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# ===== 操作系统 =====
+.DS_Store
+Thumbs.db
+
+# ===== 运行时上传文件 =====
+kb-uploads/
+
+# ===== 本地敏感/临时文件 =====
+*.local
+*.tmp
+
+# ===== WorkBuddy 项目记忆/日志（本地数据，不进仓库）=====
+.workbuddy/
